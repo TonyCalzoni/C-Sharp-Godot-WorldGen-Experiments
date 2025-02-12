@@ -1,6 +1,6 @@
 class_name WFC_Cell extends Node
 
-var possible_types: Array[String]:
+var possible_types: Array:
 	get:
 		return possible_types
 	set(value):
@@ -19,7 +19,7 @@ var position: Vector2i:
 		position = value
 
 
-func _init(_possible_types: Array[String], _position: Vector2i) -> void:
+func _init(_possible_types: Array, _position: Vector2i) -> void:
 	possible_types = _possible_types
 	position = _position
 	is_collapsed = false
@@ -31,7 +31,7 @@ func cell_to_string() -> String:
 	return "Cell at %v, Collapsed: %s, Types: %s" % [position, is_collapsed, string_array_to_single_string(possible_types)]
 
 
-func string_array_to_single_string(arr: Array[String]) -> String:
+func string_array_to_single_string(arr: Array) -> String:
 	var ret = ""
 	for i in arr:
 		if ret != "":

@@ -16,7 +16,7 @@ const directions: Array = [
 
 @export var grid_size: Vector2i = Vector2i(150,80)
 
-var all_possible_types: Array[String] = ["grass", "sand", "water"]
+var all_possible_types: Array = ["grass", "sand", "water"]
 
 # Adjacency rules
 #// Define the adjacency rules
@@ -59,7 +59,7 @@ var type_of_tree_tiles: Dictionary = {
 	}
 
 	#private WFC_Cell[,] grid;
-var grid: Array[Array]
+var grid: Array
 
 	#private Random random = new Random();
 var random: RandomNumberGenerator
@@ -113,7 +113,7 @@ func generate_world() -> void:
 	#}
 func initialize_grid() -> void:
 	# We have to do this weird because Godot doesn't have built-in multidimensional arrays
-	var x_arr: Array[Array] = [] # Declare our x_array, which will be an array of array
+	var x_arr: Array = [] # Declare our x_array, which will be an array of array
 	x_arr.resize(grid_size.x) # Set the max size
 	var y_arr: Array = [] # Do the same for our y_array, which will hold the actual cells
 	y_arr.resize(grid_size.y)
@@ -124,7 +124,7 @@ func initialize_grid() -> void:
 			var moist: float = noise_map.get_moisture(i_x, i_y)
 			var temp: float = noise_map.get_temperature(i_x, i_y)
 			var object_clump: float = noise_map.get_object_clumps(i_x, i_y)
-			var possible_types: Array[String] = get_initial_possible_types(ocean_alt, moist, temp, object_clump)
+			var possible_types: Array = get_initial_possible_types(ocean_alt, moist, temp, object_clump)
 			y_arr[i_y] = WFC_Cell.new(possible_types, Vector2i(i_x, i_y))
 		# Now that that chunk of y_array is done, add it to the x_array
 		x_arr[i_x] = y_arr
@@ -150,7 +150,7 @@ func initialize_grid() -> void:
 			#else return new List<string> { "grass" };
 		#}
 	#}
-func get_initial_possible_types(ocean_alt: float, moist: float, temp: float, _object_clump: float) -> Array[String]:
+func get_initial_possible_types(ocean_alt: float, moist: float, temp: float, _object_clump: float) -> Array:
 	if ocean_alt < 0:
 		return ["water"]
 	elif ocean_alt < 0.3:
@@ -218,7 +218,7 @@ func get_biome(moist: float, temp: float) -> String:
 	#}
 func select_cell_with_least_entropy() -> WFC_Cell:
 	var min_entropy: int = 9223372036854775807 # Max value
-	var cells_with_least_entropy: Array[WFC_Cell] = []
+	var cells_with_least_entropy: Array = []
 	
 	for i_x in grid_size.x:
 		for i_y in grid_size.y:
@@ -232,6 +232,7 @@ func select_cell_with_least_entropy() -> WFC_Cell:
 				elif entropy == min_entropy:
 					cells_with_least_entropy.append(cell)
 	if cells_with_least_entropy.size() == 0:
+		print_debug("WFC: No cells with least entropy remain")
 		return null
 	return cells_with_least_entropy.pick_random()
 
@@ -277,15 +278,16 @@ func collapse_cell(cell: WFC_Cell) -> void:
 		#return true; // No contradiction found
 	#}
 func propagate_constraints(cell: WFC_Cell) -> bool:
-	var neighbors: Array[WFC_Cell] = get_neighbors(cell)
+	var neighbors: Array = get_neighbors(cell)
 	for neighbor_cell in neighbors:
 		if !neighbor_cell.is_collapsed:
-			var allowed_neighbor_types: Array[String] = adjacency_rules[cell.possible_types.front()] # orig [0]
-			var new_possible_types: Array[String] # Intersection array, now we have to populate it
+			var allowed_neighbor_types: Array = adjacency_rules[cell.possible_types.front()] # orig [0]
+			var new_possible_types: Array # Intersection array, now we have to populate it
 			for i in neighbor_cell.possible_types:
 				if allowed_neighbor_types.has(i):
 					new_possible_types.append(i)
 			if new_possible_types.size() == 0:
+				print_debug("WFC: Contradiction found")
 				return false
 			neighbor_cell.possible_types = new_possible_types
 	return true
@@ -313,12 +315,12 @@ func propagate_constraints(cell: WFC_Cell) -> bool:
 #
 		#return neighbors;
 	#}
-func get_neighbors(cell: WFC_Cell) -> Array[WFC_Cell]:
-	var neighbors: Array[WFC_Cell]
+func get_neighbors(cell: WFC_Cell) -> Array:
+	var neighbors: Array
 	for dir in directions:
-		var neighbor_pos: Vector2i = cell.position + directions[dir]
+		var neighbor_pos: Vector2i = cell.position + dir
 		if is_valid_position(neighbor_pos):
-			neighbors.append(neighbor_pos)
+			neighbors.append(grid[neighbor_pos.x][neighbor_pos.y])
 	
 	return neighbors
 
@@ -386,9 +388,9 @@ func output_to_tilemap() -> void: # TODO
 			var cell: WFC_Cell = grid[i_x][i_y]
 			if cell.is_collapsed and cell.possible_types.size() > 0:
 				var tile_type: String = cell.possible_types.front() # orig [0]
-				var tile_coords: Vector2i = type_to_tile_coords[tile_type]
+				var tile_coords = type_to_tile_coords[tile_type]
 				var cell_coord: Vector2i = Vector2i(i_x, i_y)
-				set_cell(0, cell_coord, 0, tile_coords)
+				set_cell(0, cell_coord, 1, tile_coords)
 				
 				if tile_type == "snow" and noise_map.get_object_clumps(i_x, i_y) < -0.5:
-					set_cell(1, cell_coord, 1, type_of_tree_tiles["snowy_tree"])
+					set_cell(1, cell_coord, 2, type_of_tree_tiles["snowy_tree"])
