@@ -1,4 +1,6 @@
 # Godot-2D-WorldGen
+Important note: The original using mono took just shy of 20 seconds ( ~19,900 ms ) to complete on a Chromebook, whereas the gd native took about 465 seconds ( ~465564 ms ), close to 8 minutes, to complete.
+
 Ported to native gd script from C#, original work by codeSmithDave <br>
 My aim is to eventually generate procedural 3D maps and environments building upon this. <br>
  <br>
