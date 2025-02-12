@@ -227,13 +227,27 @@ public partial class WFC_Grid : TileMap
 
 	private bool PerformWaveFunctionCollapse()
 	{
+		int start_tick = System.Environment.TickCount;
+		int cell_count = gridSize.X * gridSize.Y;
+		int completion_count = 0;
+		int iter_count = 0;
+		GD.Print(String.Format("WFC: Starting collapse on {0} cells", cell_count), "");
 		while (true)
 		{
+			iter_count++;
 			WFC_Cell cell = SelectCellWithLeastEntropy();
-			if (cell == null) return true; // All cells are collapsed
+			if (cell == null) {
+				int end_tick = System.Environment.TickCount;
+				GD.Print(String.Format("WFC: Completed on {0} cells in {1} ticks", cell_count, end_tick - start_tick), "");
+				return true; // All cells are collapsed
+			}
 
 			CollapseCell(cell);
-			PropagateConstraints(cell);
+			if (PropagateConstraints(cell)) { completion_count++; }
+			if (iter_count > 100) {
+				iter_count = 0;
+				GD.Print(String.Format("WFC: Status {0} of {1}", completion_count, cell_count), "");
+			}
 		}
 	}
 
