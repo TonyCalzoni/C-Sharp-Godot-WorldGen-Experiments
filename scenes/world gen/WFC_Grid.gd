@@ -114,20 +114,18 @@ func generate_world() -> void:
 func initialize_grid() -> void:
 	# We have to do this weird because Godot doesn't have built-in multidimensional arrays
 	var x_arr: Array = [] # Declare our x_array, which will be an array of array
-	x_arr.resize(grid_size.x) # Set the max size
-	var y_arr: Array = [] # Do the same for our y_array, which will hold the actual cells
-	y_arr.resize(grid_size.y)
-	for i_x in x_arr.size():
+	for i_x in grid_size.x:
+		var y_arr: Array = [] # Do the same for our y_array, which will hold the actual cells
 		# Work in loop, need to fill the y_array with new cells now
-		for i_y in y_arr.size():
+		for i_y in grid_size.y:
 			var ocean_alt: float = noise_map.get_ocean_altitude(i_x, i_y)
 			var moist: float = noise_map.get_moisture(i_x, i_y)
 			var temp: float = noise_map.get_temperature(i_x, i_y)
 			var object_clump: float = noise_map.get_object_clumps(i_x, i_y)
 			var possible_types: Array = get_initial_possible_types(ocean_alt, moist, temp, object_clump)
-			y_arr[i_y] = WFC_Cell.new(possible_types, Vector2i(i_x, i_y))
+			y_arr.append(WFC_Cell.new(possible_types, Vector2i(i_x, i_y)))
 		# Now that that chunk of y_array is done, add it to the x_array
-		x_arr[i_x] = y_arr
+		x_arr.append(y_arr)
 	
 	grid = x_arr
 
@@ -287,7 +285,7 @@ func propagate_constraints(cell: WFC_Cell) -> bool:
 				if allowed_neighbor_types.has(i):
 					new_possible_types.append(i)
 			if new_possible_types.size() == 0:
-				print_debug("WFC: Contradiction found")
+				#print_debug("WFC: Contradiction found")
 				return false
 			neighbor_cell.possible_types = new_possible_types
 	return true
@@ -345,15 +343,26 @@ func is_valid_position(_position: Vector2i) -> bool:
 		#}
 	#}
 func perform_wfc() -> bool:
+	var cell_count = grid_size.x * grid_size.y
+	var iter_count = 0
+	var completion_count = 0
+	print_debug("WFC: Performing collapse on %s cells" % cell_count)
 	while(true):
+		iter_count += 1
 		var cell: WFC_Cell = select_cell_with_least_entropy()
 		if cell == null:
+			# Done
 			return true
 		else:
 			collapse_cell(cell)
-			propagate_constraints(cell)
+			if propagate_constraints(cell):
+				completion_count += 1
+		if iter_count >= 100:
+			iter_count = 0
+			print_debug("WFC: Completion status: " + str(completion_count) + " of " + str(cell_count))
 		
 	# This isn't needed but the compiler wants it here so that all paths return a value
+	print_debug("WFC: PerformWFC: The impossible has happened")
 	return false
 
 
@@ -382,7 +391,7 @@ func perform_wfc() -> bool:
 			#}
 		#}
 	#}
-func output_to_tilemap() -> void: # TODO
+func output_to_tilemap() -> void:
 	for i_x in grid_size.x:
 		for i_y in grid_size.y:
 			var cell: WFC_Cell = grid[i_x][i_y]
