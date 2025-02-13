@@ -51,12 +51,17 @@ sources/1 = SubResource("TileSetAtlasSource_tvk80")
 [node name="World" type="Node2D"]
 script = ExtResource("1_djyhq")
 
-[node name="TileMap" type="TileMap" parent="."]
+[node name="Player" parent="." instance=ExtResource("4_m8y85")]
+z_index = 1
+position = Vector2(101, 99)
+
+[node name="MapLayer" type="TileMapLayer" parent="." node_paths=PackedStringArray("layerDecor")]
+use_parent_material = true
 scale = Vector2(3, 3)
 tile_set = SubResource("TileSet_rov5j")
-format = 2
-layer_1/tile_data = PackedInt32Array()
 script = ExtResource("1_gflq5")
+layerDecor = NodePath("LayerDecor")
 
-[node name="Player" parent="." instance=ExtResource("4_m8y85")]
-position = Vector2(101, 99)
+[node name="LayerDecor" type="TileMapLayer" parent="MapLayer"]
+use_parent_material = true
+tile_set = SubResource("TileSet_rov5j")

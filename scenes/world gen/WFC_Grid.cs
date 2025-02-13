@@ -3,9 +3,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-public partial class WFC_Grid : TileMap
+public partial class WFC_Grid : TileMapLayer
 {
-	private Vector2I gridSize = new Vector2I(150, 80);
+	[Export] private TileMapLayer layerDecor;
+	
+	private Vector2I gridSize = new Vector2I(64, 64);
 	private List<string> allPossibleTypes = new List<string> { "grass", "sand", "water" };
 	private Dictionary<string, Vector2I> typeToTileCoords = new Dictionary<string, Vector2I>
 	{
@@ -16,7 +18,8 @@ public partial class WFC_Grid : TileMap
 	};
 	private Dictionary<string, Vector2I> typeOfTreeTiles = new Dictionary<string, Vector2I>
 	{
-		{"snowy_tree", new Vector2I(2, 3)}
+		{"snowy_tree", new Vector2I(2, 3)},
+		{"grassy_tree", new Vector2I(3, 2)}
 	};
 	private WFC_Cell[,] grid;
 	private Random random = new Random();
@@ -227,13 +230,27 @@ public partial class WFC_Grid : TileMap
 
 	private bool PerformWaveFunctionCollapse()
 	{
+		int start_tick = System.Environment.TickCount;
+		int cell_count = gridSize.X * gridSize.Y;
+		int completion_count = 0;
+		int iter_count = 0;
+		GD.Print(String.Format("WFC: Starting collapse on {0} cells", cell_count), "");
 		while (true)
 		{
+			iter_count++;
 			WFC_Cell cell = SelectCellWithLeastEntropy();
-			if (cell == null) return true; // All cells are collapsed
+			if (cell == null) {
+				int end_tick = System.Environment.TickCount;
+				GD.Print(String.Format("WFC: Completed on {0} cells in {1} ticks", cell_count, end_tick - start_tick), "");
+				return true; // All cells are collapsed
+			}
 
 			CollapseCell(cell);
-			PropagateConstraints(cell);
+			if (PropagateConstraints(cell)) { completion_count++; }
+			if (iter_count > 100) {
+				iter_count = 0;
+				GD.Print(String.Format("WFC: Status {0} of {1}", completion_count, cell_count), "");
+			}
 		}
 	}
 
@@ -250,12 +267,17 @@ public partial class WFC_Grid : TileMap
 					if (typeToTileCoords.TryGetValue(tileType, out Vector2I tileCoords))
 					{
 						Vector2I cellCoord = new Vector2I(x, y);
-						SetCell(0, cellCoord, 0, tileCoords);
+						//SetCell(0, cellCoord, 0, tileCoords);
+						SetCell(cellCoord, 0, tileCoords);
 
 						//with this code, the trees will 100% show up on each snow tile; use the noiseMap objectClumps noise to create more natural (hopefully) forests
 						if(tileType == "snow" && noiseMap.GetObjectClumps(x, y) < -0.5)
 						{
-							SetCell(1, cellCoord, 1, typeOfTreeTiles["snowy_tree"]);
+							layerDecor.SetCell(cellCoord, 1, typeOfTreeTiles["snowy_tree"]);
+						}
+						else if(tileType == "grass" && noiseMap.GetObjectClumps(x, y) < -0.5)
+						{
+							layerDecor.SetCell(cellCoord, 1, typeOfTreeTiles["grassy_tree"]);
 						}
 					}
 				}

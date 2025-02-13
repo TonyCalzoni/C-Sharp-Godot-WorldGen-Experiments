@@ -11,17 +11,17 @@ public partial class Noise_Map : Node
 {
 	//set up the getter/setters for various types of noise (ocean+landmass, biome, object clumping like forests)
 	public FastNoiseLite OceanAltitude { get; private set; }
-    public FastNoiseLite Moisture { get; private set; }
-    public FastNoiseLite Temperature { get; private set; }
+	public FastNoiseLite Moisture { get; private set; }
+	public FastNoiseLite Temperature { get; private set; }
 	public FastNoiseLite ObjectClumps { get; private set; }
 
 	public Noise_Map()
-    {
-        InitializeNoise();
-    }
+	{
+		InitializeNoise();
+	}
 
 	//go through initialization process; choose noise types, seeds, etc.
-    private void InitializeNoise()
+	private void InitializeNoise()
 	{
 		OceanAltitude = new FastNoiseLite();
 		OceanAltitude.Seed = 1337; //(int)DateTime.Now.Ticks;//rand number
@@ -49,9 +49,9 @@ public partial class Noise_Map : Node
 	}
 
 	// Additional methods to get noise values for specific coordinates
-    public float GetOceanAltitude(int x, int y) => OceanAltitude.GetNoise2D(x, y);
-    public float GetMoisture(int x, int y) => Moisture.GetNoise2D(x, y);
-    public float GetTemperature(int x, int y) => Temperature.GetNoise2D(x, y);
+	public float GetOceanAltitude(int x, int y) => OceanAltitude.GetNoise2D(x, y);
+	public float GetMoisture(int x, int y) => Moisture.GetNoise2D(x, y);
+	public float GetTemperature(int x, int y) => Temperature.GetNoise2D(x, y);
 
 	public float GetObjectClumps(int x, int y) => ObjectClumps.GetNoise2D(x, y);
 }
